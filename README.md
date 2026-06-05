@@ -1,22 +1,42 @@
-# APT Taxonomy Intelligence
+# 🔐 APT Research Navigator
 
-**A production-grade ML pipeline that automatically builds a hierarchical taxonomy of Advanced Persistent Threat research — and serves it as an interactive web application.**
+**An end-to-end ML pipeline that automatically scrapes, cleans, clusters, and taxonomises 120 peer-reviewed APT security papers — served as a live interactive web application with full-text search and a REST API.**
 
 [![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python&logoColor=white)](https://python.org)
+[![Streamlit](https://img.shields.io/badge/Streamlit-deployed-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io)
 [![Flask](https://img.shields.io/badge/Flask-3.0-black?logo=flask)](https://flask.palletsprojects.com)
-[![sentence-transformers](https://img.shields.io/badge/sentence--transformers-2.7.0-orange)](https://www.sbert.net)
-[![scikit-learn](https://img.shields.io/badge/scikit--learn-1.4.0-F7931E?logo=scikit-learn&logoColor=white)](https://scikit-learn.org)
-[![BITS Pilani](https://img.shields.io/badge/BITS_Pilani-CS_F266-0057A8)](https://bits-pilani.ac.in)
+[![sentence-transformers](https://img.shields.io/badge/sentence--transformers-all--mpnet--base--v2-orange)](https://www.sbert.net)
+[![scikit-learn](https://img.shields.io/badge/scikit--learn-Ward_HAC-F7931E)](https://scikit-learn.org)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![BITS Pilani](https://img.shields.io/badge/BITS_Pilani-CS_F266_Study_Project-0057A8)](https://bits-pilani.ac.in)
 
 ---
 
-## What This Is
+## Live Demo
 
-120 peer-reviewed APT security papers (2021–2026), automatically collected, cleaned, semantically embedded, and clustered into a 2-level taxonomy — then exposed as a searchable web interface and REST API.
+> **[▶ Launch on Streamlit Cloud](https://kanik0575-apt-research-navigator-streamlit-app-xxxx.streamlit.app)**
+> *(deploy instructions below — takes 2 min)*
 
-**The problem it solves:** Threat intelligence analysts waste hours manually searching for relevant APT research. This pipeline organises the research landscape into a navigable structure, so finding papers on "lateral movement detection via provenance graphs" takes under 60 seconds instead of 30 minutes.
+---
 
-→ **[Live Demo](#running-the-web-interface)** | **[Product Thinking](PRODUCT_THINKING.md)** | **[JSON API](#api)**
+## Screenshots
+
+### Home — Taxonomy Overview & Pipeline
+![Home Page](static/screenshots/home.png)
+
+### Search — Full-Text Search Across 120 Papers
+![Search Interface](static/screenshots/search.png)
+
+### Taxonomy Browser — Collapsible Cluster Explorer
+![Taxonomy Browser](static/screenshots/taxonomy.png)
+
+---
+
+## What This Solves
+
+Threat intelligence analysts spend hours manually searching for APT research. This pipeline maps the entire research landscape into a navigable, ML-derived hierarchy — so finding papers on "lateral movement detection via provenance graphs" takes **under 60 seconds instead of 30 minutes**.
+
+→ [Product Thinking & Analyst UX Design](PRODUCT_THINKING.md)
 
 ---
 
@@ -25,161 +45,143 @@
 ```
 APT ATTACKS TAXONOMY  (120 papers · 2021–2026)
 │
-├── C1  Cyber Espionage & Nation-State Attribution          (n=18)
-│   ├── S1  Attribution & Tracking                         (n=10)
-│   └── S2  Forensic Investigation                         (n=8)
+├── C1  Zero-Day Exploits & Vulnerability Analysis          (n=7)
+│   └── S1  Detection & Classification
 │
-├── C2  ML-Based Intrusion Detection Systems               (n=22)
-│   ├── S1  Detection & Classification                     (n=13)
-│   └── S2  Behavioral Analysis                            (n=9)
+├── C2  Threat Intelligence & Kill Chain Modeling           (n=23)
+│   ├── S1  Behavioral Analysis
+│   └── S2  Defense & Mitigation
 │
-├── C3  Malware Analysis & Reverse Engineering             (n=17)
-│   ├── S1  Technique Analysis                             (n=9)
-│   └── S2  Attribution & Tracking                        (n=8)
+├── C3  Malware Analysis & Reverse Engineering              (n=10)
+│   ├── S1  Detection & Classification
+│   └── S2  Attribution & Tracking
 │
-├── C4  Lateral Movement & C2 Infrastructure               (n=16)
-│   ├── S1  Defense & Mitigation                           (n=8)
-│   └── S2  Detection & Classification                     (n=8)
+├── C4  Financial Theft & Ransomware Operations             (n=18)
+│   ├── S1  Defense & Mitigation
+│   └── S2  Defense & Mitigation
 │
-├── C5  Provenance Graphs & Attack Forensics               (n=19)
-│   ├── S1  Forensic Investigation                         (n=11)
-│   └── S2  Technique Analysis                             (n=8)
+├── C5  Provenance Graphs & Attack Forensics                (n=12)
+│   ├── S1  Forensic Investigation
+│   └── S2  Technique Analysis
 │
-├── C6  Threat Intelligence & Kill Chain Modeling          (n=15)
-│   ├── S1  Attribution & Tracking                         (n=8)
-│   └── S2  Defense & Mitigation                           (n=7)
+├── C6  Cyber Espionage & Nation-State Attribution          (n=2)
+│   └── S1  Attribution & Tracking
 │
-└── C7  Zero-Day Exploits & Vulnerability Analysis         (n=13)
-    ├── S1  Detection & Classification                     (n=7)
-    └── S2  Behavioral Analysis                            (n=6)
+└── C7  ML-Based Intrusion Detection Systems                (n=30)
+    ├── S1  Detection & Classification
+    └── S2  Defense & Mitigation
 ```
 
-> Cluster labels are auto-assigned at runtime via Semantic Centroid Matching. The structure above reflects the actual output from running on the included corpus.
+Cluster labels auto-assigned at runtime via **Semantic Centroid Matching** (Hungarian algorithm optimal assignment).
 
 ---
 
 ## Pipeline Architecture
 
 ```
-┌──────────────────┐    ┌──────────────────┐    ┌─────────────────────────────┐
-│   scraper.py     │───▶│  preprocess.py   │───▶│    taxonomy_builder.py      │
-│                  │    │                  │    │                             │
-│ Semantic Scholar │    │ HTML decode      │    │ Sentence-Transformer embed  │
-│ 5 APT queries    │    │ URL removal      │    │ (all-mpnet-base-v2, 768-d)  │
-│ Dual-group filter│    │ NLTK lemmatize   │    │ Ward HAC (Euclidean/L2)     │
-│ 120 papers       │    │ Stop-word filter │    │ Semantic Centroid Matching  │
-│ 2021–2026        │    │ Dual-group recheck│   │ Hungarian label assignment  │
-└──────────────────┘    └──────────────────┘    └─────────────────────────────┘
-         │                       │                            │
-         ▼                       ▼                            ▼
-apt_papers_raw.csv    apt_papers_clean.csv      final_taxonomy_mapping.csv
+┌──────────────────┐    ┌──────────────────┐    ┌──────────────────────────────┐
+│   scraper.py     │───▶│  preprocess.py   │───▶│    taxonomy_builder.py       │
+│                  │    │                  │    │                              │
+│ Semantic Scholar │    │ HTML decode      │    │ Sentence-Transformer embed   │
+│ 5 APT queries    │    │ URL removal      │    │ (all-mpnet-base-v2, 768-dim) │
+│ Dual-group filter│    │ NLTK lemmatize   │    │ Ward HAC (L2-normalised)     │
+│ 120 papers       │    │ Domain stopwords │    │ Silhouette sweep → k=7       │
+│ 2021–2026        │    │ Min-length filter│    │ Semantic Centroid Matching   │
+└──────────────────┘    └──────────────────┘    │ Hungarian label assignment   │
+         │                       │               └──────────────────────────────┘
+         ▼                       ▼                            │
+apt_papers_raw.csv    apt_papers_clean.csv                    ▼
+                                                final_taxonomy_mapping.csv
                                                 apt_dendrogram.png
                                                 apt_taxonomy_tree.png
                                                          │
-                                                         ▼
-                                              ┌──────────────────┐
-                                              │     app.py       │
-                                              │  Flask web UI    │
-                                              │  + REST API      │
-                                              └──────────────────┘
+                                      ┌──────────────────┴────────────────────┐
+                                      │                                       │
+                                 streamlit_app.py                          app.py
+                               Streamlit Cloud deploy               Flask (self-host)
+                               Full-text search + browser           REST JSON API
 ```
 
 ---
 
 ## Key Technical Decisions
 
-### Why Ward Agglomerative Clustering?
-K-Means produces flat buckets — not a taxonomy. HDBSCAN drops noise points, unacceptable for a small corpus. Ward HAC builds a full dendrogram, preserving the hierarchical structure at any depth.
-
-### Why Semantic Centroid Matching instead of c-TF-IDF?
-On 120 papers, c-TF-IDF labels are generic and repetitive — there isn't enough text mass per cluster for discriminative term frequency to emerge. Semantic Centroid Matching embeds both cluster centroids and expert-defined gold labels, then uses the Hungarian algorithm to find the globally optimal one-to-one assignment. The result: semantically coherent labels that reflect actual research focus, not just frequent words.
-
-### Why `all-mpnet-base-v2` and not SecBERT?
-SecBERT is a masked-LM BERT requiring custom mean-pooling with no validated sentence-level benchmarks for this task. `all-mpnet-base-v2` has strong sentence similarity performance and produces 768-dim L2-normalised vectors — making Ward's required Euclidean distance monotonic with cosine distance on the unit hypersphere. This trade-off is documented honestly in the code.
+| Decision | Choice | Why |
+|---|---|---|
+| Clustering algorithm | **Ward Agglomerative HAC** | K-Means = flat buckets, not a taxonomy. Ward builds a full dendrogram; any depth available. HDBSCAN drops noise points — unacceptable for a small corpus. |
+| Cluster labeling | **Semantic Centroid Matching** | c-TF-IDF on 120 papers yields generic labels ("method detection approach"). SCM embeds expert gold labels and uses the **Hungarian algorithm** for globally-optimal one-to-one assignment. |
+| Embedding model | **all-mpnet-base-v2** | SecBERT/SecureBERT are masked-LMs requiring custom mean-pooling with no validated sentence-level benchmarks. mpnet produces 768-dim L2-normalised vectors — making Ward's Euclidean distance monotonic with cosine on the unit hypersphere. Disclosed honestly. |
+| Embed raw vs. cleaned text | **Raw abstracts** | Sentence-transformers are trained on grammatical English. Lemmatised token bags destroy contextual signal. |
+| k selection | **k=7** | Validated by silhouette sweep across k=4–10. Plotted and committed. |
 
 ---
 
-## Installation & Quick Start
+## ML Output Visualisations
+
+| | |
+|---|---|
+| ![Taxonomy Tree](static/apt_taxonomy_tree.png) | ![Dendrogram](static/apt_dendrogram.png) |
+| *Taxonomy hierarchy: Root → 7 clusters → 14 sub-clusters* | *Ward dendrogram with cluster-coloured branches & semantic legend* |
+| ![Silhouette](static/silhouette_scores.png) | ![Corpus](static/corpus_distribution.png) |
+| *Silhouette score sweep — k=7 selected as optimal* | *Corpus distribution by publication year* |
+
+---
+
+## Quick Start
 
 ```bash
-# 1. Clone
-git clone https://github.com/Kanik0575/apt-taxonomy-intelligence.git
-cd apt-taxonomy-intelligence
+# Clone
+git clone https://github.com/Kanik0575/apt-research-navigator.git
+cd apt-research-navigator
 
-# 2. Create virtual environment
-python3.11 -m venv venv
-source venv/bin/activate        # Linux / macOS
-# venv\Scripts\activate         # Windows
-
-# 3. Install dependencies
+# Install
+python3.11 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 python -c "import nltk; nltk.download('stopwords'); nltk.download('wordnet'); nltk.download('omw-1.4')"
 
-# 4. Optional: set Semantic Scholar API key
-export SEMANTIC_SCHOLAR_API_KEY="your_key_here"
+# Run Streamlit app (recommended)
+streamlit run streamlit_app.py
+
+# Or run Flask app
+python app.py          # http://localhost:8080
+
+# Or run full pipeline
+bash run_pipeline.sh   # scrape → clean → cluster → output CSVs + PNGs
 ```
 
 ---
 
-## Running the Pipeline
+## Deploy to Streamlit Cloud (Free, 2 minutes)
 
-```bash
-# Full pipeline (scrape → clean → cluster)  ~20 min total
-bash run_pipeline.sh
-
-# Skip scraping — use the included CSVs
-bash run_pipeline.sh --taxonomy-only
-
-# Individual stages
-python scraper.py          # ~15 min  → apt_papers_raw.csv
-python preprocess.py       # ~1 min   → apt_papers_clean.csv
-python taxonomy_builder.py # ~3 min   → taxonomy outputs
-```
+1. Fork this repo
+2. Go to [share.streamlit.io](https://share.streamlit.io) → **New app**
+3. Select your fork → branch `main` → file `streamlit_app.py`
+4. Click **Deploy** — get a permanent public URL instantly
 
 ---
 
-## Running the Web Interface
-
-```bash
-pip install flask
-python app.py
-# Open http://localhost:5000
-```
-
-The web interface provides:
-- **Home** — taxonomy overview, pipeline architecture, output visualisations
-- **Search** — full-text search across all papers, filterable by year and cluster
-- **Taxonomy** — collapsible cluster browser with sub-cluster tabs
-- **Paper detail** — abstract, venue, related papers in same cluster, direct PDF link
-- **JSON API** — programmatic access to the taxonomy
-
----
-
-## API
+## REST API (Flask)
 
 ```bash
 # Search papers
-GET /api/papers?q=lateral+movement&year=2023&limit=20
+GET /api/papers?q=lateral+movement&year=2023&cluster=4&limit=20
 
 # Full taxonomy tree
 GET /api/taxonomy
 
-# Response format
+# Example response
 {
-  "total": 12,
-  "papers": [
-    {
-      "paper_id": "...",
-      "title": "...",
-      "year": 2023,
-      "authors": "...",
-      "cluster_id": 4,
-      "cluster_label": "Lateral Movement & Command-and-Control Infrastructure",
-      "sub_id": 1,
-      "sub_label": "Detection & Classification",
-      "url": "https://..."
-    }
-  ]
+  "total": 8,
+  "papers": [{
+    "paper_id": "...",
+    "title": "...",
+    "year": 2023,
+    "cluster_id": 4,
+    "cluster_label": "Financial Theft & Ransomware Operations",
+    "sub_id": 1,
+    "sub_label": "Defense & Mitigation",
+    "url": "https://..."
+  }]
 }
 ```
 
@@ -189,12 +191,12 @@ GET /api/taxonomy
 
 | File | Description |
 |------|-------------|
-| `apt_papers_raw.csv` | 120 real papers from Semantic Scholar API |
-| `apt_papers_clean.csv` | NLP-cleaned corpus after dual-group relevance filter |
-| `final_taxonomy_mapping.csv` | **Main output:** every paper with cluster ID and semantic label |
-| `apt_dendrogram.png` | Ward dendrogram with cluster-coloured branches |
+| `apt_papers_raw.csv` | 120 real APT papers from Semantic Scholar API |
+| `apt_papers_clean.csv` | NLP-cleaned corpus (8-step pipeline) |
+| `final_taxonomy_mapping.csv` | **Main output:** per-paper cluster + sub-cluster assignments |
 | `apt_taxonomy_tree.png` | Hierarchy tree: Root → 7 clusters → 14 sub-clusters |
-| `silhouette_scores.png` | Silhouette sweep validating k=7 |
+| `apt_dendrogram.png` | Ward dendrogram with semantic legend |
+| `silhouette_scores.png` | k-selection validation chart |
 | `corpus_distribution.png` | Papers per publication year |
 
 ---
@@ -202,67 +204,49 @@ GET /api/taxonomy
 ## Repository Structure
 
 ```
-apt-taxonomy-intelligence/
-├── README.md                      ← This file
-├── PRODUCT_THINKING.md            ← Product strategy & analyst UX design
-├── requirements.txt               ← Python dependencies
-├── run_pipeline.sh                ← One-command pipeline runner
+apt-research-navigator/
+├── streamlit_app.py          ← Streamlit app (deploy to Streamlit Cloud)
+├── app.py                    ← Flask app + REST API (self-host)
+├── scraper.py                ← Stage 1: Semantic Scholar data collection
+├── preprocess.py             ← Stage 2: NLP cleaning (8-step)
+├── taxonomy_builder.py       ← Stage 3: Embedding + HAC + labeling
+├── run_pipeline.sh           ← One-command pipeline runner
+├── requirements.txt
+├── PRODUCT_THINKING.md       ← Analyst UX design & product strategy
 │
-├── scraper.py                     ← Stage 1: Semantic Scholar data collection
-├── preprocess.py                  ← Stage 2: NLP cleaning pipeline
-├── taxonomy_builder.py            ← Stage 3: Embedding, clustering, labeling
-├── app.py                         ← Flask web application & REST API
-│
-├── templates/
-│   ├── base.html                  ← Nav, footer, Tailwind CSS
-│   ├── index.html                 ← Home: overview + search + visualisations
-│   ├── search.html                ← Search & filter results
-│   ├── taxonomy.html              ← Full taxonomy browser (collapsible)
-│   ├── paper.html                 ← Individual paper detail
-│   └── 404.html
-│
-├── static/                        ← Pipeline output images served by Flask
+├── templates/                ← Flask Jinja2 templates
+├── static/                   ← Charts, screenshots
 │   ├── apt_taxonomy_tree.png
 │   ├── apt_dendrogram.png
 │   ├── silhouette_scores.png
-│   └── corpus_distribution.png
+│   ├── corpus_distribution.png
+│   └── screenshots/
+│       ├── home.png
+│       ├── search.png
+│       └── taxonomy.png
 │
-├── apt_papers_raw.csv             ← 120 scraped papers
-├── apt_papers_clean.csv           ← Cleaned corpus
-└── final_taxonomy_mapping.csv     ← Taxonomy output (main result)
+├── apt_papers_raw.csv        ← 120 scraped papers (included, no re-scraping needed)
+├── apt_papers_clean.csv      ← Cleaned corpus
+└── final_taxonomy_mapping.csv
 ```
-
----
-
-## Methodology Summary
-
-| Stage | Component | Method |
-|-------|-----------|--------|
-| Data collection | Semantic Scholar API | 5 APT query strings × 6 years; dual-group relevance filter (Group A: APT signals, Group B: TTP signals) |
-| NLP preprocessing | NLTK | 8-step pipeline: HTML decode → URL removal → ASCII normalisation → lowercase → stop-word removal → min-length filter → lemmatisation |
-| Embedding | sentence-transformers | `all-mpnet-base-v2`, 768-dim, L2-normalised so Euclidean ≡ cosine |
-| Clustering | scipy HAC | Ward linkage, Euclidean distance; k=7 validated by silhouette sweep |
-| Labeling | Custom | Semantic Centroid Matching: cluster centroid vs. 12 gold labels → cosine similarity matrix → Hungarian algorithm |
-| Sub-clustering | scipy HAC | Depth-2: each main cluster split into k=2 sub-clusters using same method |
 
 ---
 
 ## Citation
 
 ```bibtex
-@misc{apt_taxonomy_2025,
-  title   = {APT Taxonomy Intelligence: An Automated ML Pipeline for
-             Hierarchical Classification of APT Research Literature},
-  author  = {Kanik Kumar},
-  year    = {2025},
-  school  = {BITS Pilani, Pilani Campus},
-  note    = {CS F266 Study Project. Supervisor: Prof. Rajesh Kumar.
-             GitHub: https://github.com/Kanik0575/apt-taxonomy-intelligence}
+@misc{apt_research_navigator_2025,
+  title  = {APT Research Navigator: Automated Hierarchical Taxonomy of APT Research Literature},
+  author = {Kanik Kumar},
+  year   = {2025},
+  school = {BITS Pilani, Pilani Campus},
+  note   = {CS F266 Study Project. Supervisor: Prof. Rajesh Kumar.
+            GitHub: https://github.com/Kanik0575/apt-research-navigator}
 }
 ```
 
 ---
 
-*Built with: Python · Flask · sentence-transformers · scipy · NLTK · scikit-learn · networkx · matplotlib · Tailwind CSS*
-
 *Kanik Kumar · Computer Science · BITS Pilani, Pilani Campus · 2025–2026*
+
+*Built with: Python · Streamlit · Flask · sentence-transformers · scipy · NLTK · scikit-learn · networkx · matplotlib*
