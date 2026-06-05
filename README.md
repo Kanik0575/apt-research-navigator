@@ -3,7 +3,7 @@
 **An end-to-end ML pipeline that automatically scrapes, cleans, clusters, and taxonomises 120 peer-reviewed APT security papers — served as a live interactive web application with full-text search and a REST API.**
 
 [![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python&logoColor=white)](https://python.org)
-[![Streamlit](https://img.shields.io/badge/Streamlit-deployed-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io)
+[![Streamlit](https://img.shields.io/badge/Streamlit-live_demo-FF4B4B?logo=streamlit&logoColor=white)](https://kanik0575-apt-research-navigator-streamlit-app-snx4on.streamlit.app)
 [![Flask](https://img.shields.io/badge/Flask-3.0-black?logo=flask)](https://flask.palletsprojects.com)
 [![sentence-transformers](https://img.shields.io/badge/sentence--transformers-all--mpnet--base--v2-orange)](https://www.sbert.net)
 [![scikit-learn](https://img.shields.io/badge/scikit--learn-Ward_HAC-F7931E)](https://scikit-learn.org)
@@ -14,8 +14,9 @@
 
 ## Live Demo
 
-> **[▶ Launch on Streamlit Cloud](https://kanik0575-apt-research-navigator-streamlit-app-xxxx.streamlit.app)**
-> *(deploy instructions below — takes 2 min)*
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://kanik0575-apt-research-navigator-streamlit-app-snx4on.streamlit.app)
+
+**[▶ Launch Live App](https://kanik0575-apt-research-navigator-streamlit-app-snx4on.streamlit.app)**
 
 ---
 

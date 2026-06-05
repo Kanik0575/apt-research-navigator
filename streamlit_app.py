@@ -127,7 +127,7 @@ with col_h1:
 with col_h2:
     st.markdown("""
     <div style='text-align:right; padding-top:8px'>
-      <a href="https://github.com/Kanik0575/apt-research-navigator" target="_blank"
+      <a href="https://github.com/Kanik0575/apt-research-navigator" target="_blank" rel="noopener noreferrer"
          style='background:#1e293b; color:white; padding:8px 16px; border-radius:8px;
                 text-decoration:none; font-weight:600; font-size:0.85rem'>
         ⭐ GitHub
