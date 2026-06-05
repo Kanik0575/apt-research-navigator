@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}Taxonomy Browser — APT Taxonomy Intelligence{% endblock %}
+
+{% block content %}
+
+<div class="mb-6 flex items-center justify-between">
+  <div>
+    <h1 class="text-2xl font-bold text-slate-800">Full Taxonomy Browser</h1>
+    <p class="text-sm text-slate-500 mt-1">7 top-level clusters · 14 sub-clusters · 120 papers (2021–2026)</p>
+  </div>
+  <a href="/search" class="text-sm font-medium text-blue-600 hover:underline">Search papers →</a>
+</div>
+
+<!-- Taxonomy tree image -->
+<div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 mb-8">
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="font-semibold text-slate-800">Hierarchy Overview</h2>
+    <span class="text-xs text-slate-400 mono">Ward HAC + Semantic Centroid Matching</span>
+  </div>
+  <img src="/static/apt_taxonomy_tree.png" alt="APT Taxonomy Tree"
+       class="w-full rounded-lg border border-slate-100 max-h-96 object-contain" />
+</div>
+
+<!-- Cluster accordion -->
+<div class="space-y-4">
+  {% for cluster in tree %}
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+
+    <!-- Cluster header -->
+    <button onclick="toggleCluster({{ cluster.cluster_id }})"
+            class="w-full flex items-center justify-between p-5 hover:bg-slate-50 transition-colors text-left">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+             style="background: {{ cluster.color }}">
+          C{{ cluster.cluster_id }}
+        </div>
+        <div>
+          <div class="font-semibold text-slate-800">{{ cluster.label }}</div>
+          <div class="text-xs text-slate-400 mt-0.5 flex gap-3">
+            <span>{{ cluster.count }} papers</span>
+            <span>·</span>
+            {% for sub in cluster.sub_clusters %}
+            <span>{{ sub.label }} ({{ sub.count }})</span>
+            {% if not loop.last %}<span>·</span>{% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 flex-shrink-0">
+        <a href="/search?cluster={{ cluster.cluster_id }}"
+           onclick="event.stopPropagation()"
+           class="text-xs font-medium text-blue-600 hover:underline hidden sm:block">
+          Filter search →
+        </a>
+        <svg id="arrow-{{ cluster.cluster_id }}" class="w-5 h-5 text-slate-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+      </div>
+    </button>
+
+    <!-- Papers list (collapsed by default) -->
+    <div id="cluster-{{ cluster.cluster_id }}" class="hidden border-t border-slate-100">
+
+      <!-- Sub-cluster tabs -->
+      {% set papers = papers_by_cluster[cluster.cluster_id] %}
+      {% set subs = cluster.sub_clusters %}
+
+      {% if subs|length > 1 %}
+      <div class="px-5 pt-4 pb-2 flex gap-2 flex-wrap">
+        <button onclick="filterSub({{ cluster.cluster_id }}, 0)"
+                id="sub-btn-{{ cluster.cluster_id }}-0"
+                class="sub-btn text-xs px-3 py-1.5 rounded-full font-medium border transition-colors border-slate-300 bg-slate-100 text-slate-600 active-sub"
+                data-cluster="{{ cluster.cluster_id }}">
+          All ({{ cluster.count }})
+        </button>
+        {% for sub in subs %}
+        <button onclick="filterSub({{ cluster.cluster_id }}, {{ sub.sub_id }})"
+                id="sub-btn-{{ cluster.cluster_id }}-{{ sub.sub_id }}"
+                class="sub-btn text-xs px-3 py-1.5 rounded-full font-medium border transition-colors border-slate-200 text-slate-500 hover:bg-slate-50"
+                data-cluster="{{ cluster.cluster_id }}">
+          S{{ sub.sub_id }}: {{ sub.label }} ({{ sub.count }})
+        </button>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Paper cards -->
+      <div class="px-5 pb-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-2">
+        {% for p in papers %}
+        <a href="/paper/{{ p.paper_id }}"
+           class="paper-card block rounded-lg border border-slate-100 p-3 hover:border-slate-300 hover:bg-slate-50 transition-all card-hover"
+           data-sub="{{ p.sub_id }}"
+           style="border-left: 3px solid {{ cluster_colors[cluster.cluster_id] }};">
+          <div class="text-xs font-semibold text-slate-800 leading-snug mb-1.5 line-clamp-2">{{ p.title }}</div>
+          <div class="flex items-center justify-between gap-1">
+            <span class="text-xs text-slate-400">{{ p.authors.split(";")[0].strip() if p.authors else "Unknown" }}</span>
+            <div class="flex items-center gap-1.5 flex-shrink-0">
+              <span class="text-xs text-slate-400">{{ p.year }}</span>
+              {% if p.url %}
+              <span class="w-1.5 h-1.5 rounded-full bg-green-400" title="Open access"></span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="mt-1.5">
+            <span class="text-xs px-2 py-0.5 rounded-full border"
+                  style="background: {{ cluster_pastel[cluster.cluster_id] }}; border-color: {{ cluster_colors[cluster.cluster_id] }}40; color: #334155">
+              S{{ p.sub_id }}: {{ p.sub_label }}
+            </span>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Silhouette chart -->
+<div class="mt-8 bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+  <div class="flex items-center justify-between mb-3">
+    <div>
+      <h2 class="font-semibold text-slate-800">Silhouette Score Validation</h2>
+      <p class="text-xs text-slate-400 mt-0.5">k=7 validated as the optimal cluster count</p>
+    </div>
+  </div>
+  <img src="/static/silhouette_scores.png" alt="Silhouette Scores"
+       class="w-full max-w-lg mx-auto rounded-lg border border-slate-100" />
+</div>
+
+<script>
+function toggleCluster(id) {
+  const el = document.getElementById('cluster-' + id);
+  const arrow = document.getElementById('arrow-' + id);
+  el.classList.toggle('hidden');
+  arrow.classList.toggle('rotate-180');
+}
+
+function filterSub(clusterId, subId) {
+  // Update button styles
+  document.querySelectorAll(`.sub-btn[data-cluster="${clusterId}"]`).forEach(btn => {
+    btn.classList.remove('bg-blue-600', 'text-white', 'border-blue-600', 'active-sub');
+    btn.classList.add('border-slate-200', 'text-slate-500');
+  });
+  const activeBtn = document.getElementById(`sub-btn-${clusterId}-${subId}`);
+  activeBtn.classList.add('bg-blue-600', 'text-white', 'border-blue-600');
+  activeBtn.classList.remove('border-slate-200', 'text-slate-500');
+
+  // Show/hide paper cards
+  document.querySelectorAll(`#cluster-${clusterId} .paper-card`).forEach(card => {
+    if (subId === 0 || parseInt(card.dataset.sub) === subId) {
+      card.style.display = 'block';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+</script>
+
+{% endblock %}

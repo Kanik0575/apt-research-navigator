@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}{{ paper.title[:60] }}… — APT Taxonomy{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<nav class="text-sm text-slate-400 mb-5 flex items-center gap-2">
+  <a href="/" class="hover:text-slate-600">Home</a>
+  <span>/</span>
+  <a href="/search?cluster={{ paper.cluster_id }}" class="hover:text-slate-600">{{ paper.cluster_label }}</a>
+  <span>/</span>
+  <span class="text-slate-600 truncate">{{ paper.title[:50] }}…</span>
+</nav>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+  <!-- Main paper card -->
+  <div class="lg:col-span-2 space-y-5">
+
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+      <!-- Cluster badge -->
+      <div class="flex flex-wrap gap-2 mb-4">
+        <span class="cluster-badge text-white" style="background: {{ color }}">
+          Cluster {{ paper.cluster_id }}: {{ paper.cluster_label }}
+        </span>
+        <span class="cluster-badge border"
+              style="background: {{ pastel }}; border-color: {{ color }}40; color: #334155">
+          Sub-cluster {{ paper.sub_id }}: {{ paper.sub_label }}
+        </span>
+      </div>
+
+      <h1 class="text-xl font-bold text-slate-900 leading-snug mb-3">{{ paper.title }}</h1>
+
+      <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500 mb-5 pb-5 border-b border-slate-100">
+        <span><span class="font-medium text-slate-700">Authors:</span> {{ paper.authors }}</span>
+        <span><span class="font-medium text-slate-700">Year:</span> {{ paper.year }}</span>
+        {% if paper.venue %}
+        <span><span class="font-medium text-slate-700">Venue:</span> {{ paper.venue }}</span>
+        {% endif %}
+      </div>
+
+      <h2 class="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-2">Abstract</h2>
+      <p class="text-sm text-slate-600 leading-relaxed">{{ paper.abstract }}</p>
+
+      {% if paper.url %}
+      <div class="mt-5 pt-5 border-t border-slate-100">
+        <a href="{{ paper.url }}" target="_blank" rel="noopener noreferrer"
+           class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+          </svg>
+          View Full Paper
+        </a>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Semantic Scholar ID -->
+    <div class="bg-slate-50 rounded-xl border border-slate-200 p-4">
+      <div class="text-xs text-slate-500 font-medium mb-1">Semantic Scholar ID</div>
+      <div class="mono text-xs text-slate-700 break-all">{{ paper.paper_id }}</div>
+    </div>
+
+  </div>
+
+  <!-- Sidebar -->
+  <div class="space-y-5">
+
+    <!-- Cluster info -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+      <h3 class="font-semibold text-slate-800 mb-3 text-sm">Taxonomy Position</h3>
+      <div class="space-y-3">
+        <div class="rounded-lg p-3" style="background: {{ pastel }}">
+          <div class="text-xs text-slate-500 font-medium mb-0.5">Top-level Cluster</div>
+          <div class="text-sm font-semibold text-slate-800">{{ paper.cluster_label }}</div>
+        </div>
+        <div class="rounded-lg p-3 bg-slate-50 border border-slate-100">
+          <div class="text-xs text-slate-500 font-medium mb-0.5">Sub-cluster</div>
+          <div class="text-sm font-semibold text-slate-800">{{ paper.sub_label }}</div>
+        </div>
+      </div>
+      <a href="/search?cluster={{ paper.cluster_id }}"
+         class="mt-3 block text-center text-xs font-medium text-blue-600 hover:underline">
+        Browse all {{ paper.cluster_label }} papers →
+      </a>
+    </div>
+
+    <!-- Related papers -->
+    {% if siblings %}
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+      <h3 class="font-semibold text-slate-800 mb-3 text-sm">Related in Same Cluster</h3>
+      <div class="space-y-3">
+        {% for s in siblings %}
+        <a href="/paper/{{ s.paper_id }}" class="block hover:bg-slate-50 rounded-lg p-2 -mx-2 transition-colors">
+          <div class="text-xs font-medium text-slate-700 leading-snug mb-0.5 line-clamp-2">{{ s.title }}</div>
+          <div class="text-xs text-slate-400">{{ s.authors.split(";")[0] }} · {{ s.year }}</div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick actions -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+      <h3 class="font-semibold text-slate-800 mb-3 text-sm">Quick Actions</h3>
+      <div class="space-y-2">
+        <a href="/search?year={{ paper.year }}"
+           class="flex items-center gap-2 text-sm text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg px-3 py-2 transition-colors">
+          <span>📅</span> More from {{ paper.year }}
+        </a>
+        <a href="/taxonomy"
+           class="flex items-center gap-2 text-sm text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg px-3 py-2 transition-colors">
+          <span>🗂️</span> Full Taxonomy View
+        </a>
+        <a href="/api/papers?cluster={{ paper.cluster_id }}" target="_blank"
+           class="flex items-center gap-2 text-sm text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg px-3 py-2 transition-colors">
+          <span class="mono text-xs">{}</span> Export Cluster JSON
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

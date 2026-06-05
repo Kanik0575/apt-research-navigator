@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Search — APT Taxonomy Intelligence{% endblock %}
+
+{% block content %}
+
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-slate-800 mb-4">Search Papers</h1>
+
+  <!-- Search form -->
+  <form action="/search" method="get" class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+    <div class="flex flex-col sm:flex-row gap-3">
+      <input type="text" name="q" value="{{ q }}"
+        placeholder="Search title, author, abstract, technique…"
+        class="flex-1 border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+
+      <select name="year" class="border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white">
+        <option value="">All Years</option>
+        {% for y in years %}
+        <option value="{{ y }}" {% if year == y|string %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+
+      <select name="cluster" class="border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white">
+        <option value="">All Clusters</option>
+        {% for c in clusters %}
+        <option value="{{ c.cluster_id }}" {% if cluster == c.cluster_id|string %}selected{% endif %}>
+          C{{ c.cluster_id }}: {{ c.cluster_label }}
+        </option>
+        {% endfor %}
+      </select>
+
+      <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-semibold text-sm transition-colors whitespace-nowrap">
+        Search
+      </button>
+
+      {% if q or year or cluster %}
+      <a href="/search" class="border border-slate-200 hover:bg-slate-50 text-slate-600 px-4 py-2.5 rounded-lg text-sm transition-colors whitespace-nowrap text-center">
+        Clear
+      </a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- Results count -->
+<div class="flex items-center justify-between mb-4">
+  <p class="text-sm text-slate-500">
+    {% if q or year or cluster %}
+      <span class="font-semibold text-slate-800">{{ total }}</span> result{% if total != 1 %}s{% endif %}
+      {% if q %} for "<span class="font-medium">{{ q }}</span>"{% endif %}
+      {% if year %} in {{ year }}{% endif %}
+      {% if cluster %} · Cluster {{ cluster }}{% endif %}
+    {% else %}
+      Showing all <span class="font-semibold text-slate-800">{{ total }}</span> papers
+    {% endif %}
+  </p>
+  <a href="/api/papers?q={{ q }}&year={{ year }}&cluster={{ cluster }}" target="_blank"
+     class="text-xs text-slate-400 hover:text-blue-600 mono transition-colors">JSON API ↗</a>
+</div>
+
+<!-- Results -->
+{% if results %}
+<div class="space-y-3">
+  {% for p in results %}
+  <a href="/paper/{{ p.paper_id }}"
+     class="block bg-white rounded-xl border border-slate-200 shadow-sm p-5 card-hover transition-all">
+    <div class="flex items-start justify-between gap-4">
+      <div class="flex-1 min-w-0">
+        <h3 class="text-base font-semibold text-slate-800 mb-1 leading-snug">{{ p.title }}</h3>
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400 mb-3">
+          <span>{{ p.authors[:80] }}{% if p.authors|length > 80 %}…{% endif %}</span>
+          <span class="text-slate-200">·</span>
+          <span class="font-medium text-slate-500">{{ p.year }}</span>
+          {% if p.venue %}
+          <span class="text-slate-200">·</span>
+          <span class="italic">{{ p.venue[:50] }}</span>
+          {% endif %}
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <span class="cluster-badge text-white"
+                style="background: {{ cluster_colors[p.cluster_id] }}">
+            C{{ p.cluster_id }}: {{ p.cluster_label }}
+          </span>
+          <span class="cluster-badge border"
+                style="background: {{ cluster_pastel[p.cluster_id] }}; border-color: {{ cluster_colors[p.cluster_id] }}40; color: #334155">
+            S{{ p.sub_id }}: {{ p.sub_label }}
+          </span>
+        </div>
+      </div>
+      <div class="flex flex-col items-end gap-2 flex-shrink-0">
+        <span class="text-xs font-bold text-white w-8 h-8 rounded-lg flex items-center justify-center"
+              style="background: {{ cluster_colors[p.cluster_id] }}">{{ (p.year|string)[-2:] if p.year else '' }}</span>
+        {% if p.url %}
+        <span class="text-xs text-blue-500 font-medium">PDF ↗</span>
+        {% endif %}
+      </div>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+
+{% if total > 100 %}
+<p class="text-center text-sm text-slate-400 mt-6">
+  Showing top 100 of {{ total }} results. Use the <a href="/api/papers?q={{ q }}&year={{ year }}&cluster={{ cluster }}&limit=200" class="text-blue-600 hover:underline">JSON API</a> for full results.
+</p>
+{% endif %}
+
+{% else %}
+<div class="text-center py-16 text-slate-400">
+  <div class="text-5xl mb-4">🔍</div>
+  <div class="text-lg font-medium text-slate-600 mb-2">No papers found</div>
+  <div class="text-sm">Try a different keyword or remove filters</div>
+</div>
+{% endif %}
+
+{% endblock %}
