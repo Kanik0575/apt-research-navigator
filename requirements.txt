@@ -1,6 +1,2 @@
-# Streamlit Cloud deployment — minimal dependencies for the web app only
-# (The ML pipeline outputs are pre-computed CSVs committed to the repo)
-# For running the full pipeline: pip install -r requirements_pipeline.txt
-
-pandas==2.2.0
-streamlit==1.35.0
+pandas
+streamlit
